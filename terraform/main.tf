@@ -1,5 +1,5 @@
 terraform {
-  backend "gcs" {} # Configured via -backend-config in Makefile
+  backend "gcs" {}
 }
 
 provider "google" {

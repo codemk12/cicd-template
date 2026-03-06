@@ -13,5 +13,4 @@ deploy:
 		-var="project_id=$(PROJECT_ID)" \
 		-var="service_name=fastapi-$(ENV)" \
 		-var="image_url=gcr.io/$(PROJECT_ID)/fastapi:$(ENV)" \
-		-var="environment=$(ENV)" \
-		-var="github_repo=$(GITHUB_REPO)"
+		-var="environment=$(ENV)"

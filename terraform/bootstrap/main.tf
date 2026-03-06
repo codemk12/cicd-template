@@ -1,3 +1,19 @@
+terraform {
+  backend "gcs" {}
+}
+
+provider "google" {
+  project = var.project_id
+  region  = var.region
+}
+
+variable "project_id" { type = string }
+variable "region" { default = "australia-southeast1" }
+variable "github_repo" {
+  type        = string
+  description = "Format: 'owner/repo'"
+}
+
 resource "google_iam_workload_identity_pool" "github_pool" {
   workload_identity_pool_id = "github-actions-pool"
 }
