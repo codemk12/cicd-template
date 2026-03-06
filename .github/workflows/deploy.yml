@@ -3,7 +3,7 @@ on:
   pull_request:
     branches: [ uat ]
   push:
-    branches: [ uat, main ]
+    branches: [ uat, main, 'release-*' ]
 
 jobs:
   test:
@@ -30,18 +30,26 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
       - run: make deploy ENV=uat
 
-  release-prod:
+  create-release:
     needs: test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    environment: prod
-    permissions: { contents: write, id-token: write }
+    permissions: { contents: write }
     steps:
       - uses: actions/checkout@v4
       - name: Create Release Branch
         run: |
           git checkout -b release-$(date +'%Y%m%d-%H%M')
           git push origin HEAD
+
+  deploy-prod:
+    needs: test
+    if: startsWith(github.ref, 'refs/heads/release-')
+    runs-on: ubuntu-latest
+    environment: prod
+    permissions: { contents: read, id-token: write }
+    steps:
+      - uses: actions/checkout@v4
       - uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
