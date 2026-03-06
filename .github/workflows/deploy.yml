@@ -3,15 +3,51 @@ on:
   pull_request:
     branches: [ uat ]
   push:
-    branches: [ uat, main, 'release-v*' ]
+    branches: [ 'feature/**', uat, main, 'release-v*' ]
 
 jobs:
-  test:
+  quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - run: pip install -r app/requirements.txt -r requirements-dev.txt
-      - run: pytest app/test_main.py
+
+      - name: Lint (flake8)
+        run: flake8 app/ --max-line-length=120
+
+      - name: Format check (black)
+        run: black --check app/
+
+      - name: Security scan (bandit)
+        run: bandit -r app/ -x app/test_main.py
+
+      - name: Dependency audit (pip-audit)
+        run: pip-audit
+
+      - name: Type check (mypy)
+        run: mypy app/main.py --ignore-missing-imports
+
+      - name: Emoji check
+        run: python scripts/check_emoji.py .
+
+      - name: Dockerfile lint (hadolint)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+
+  test:
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r app/requirements.txt -r requirements-dev.txt
+      - run: pytest app/test_main.py -v
 
   deploy-uat:
     needs: test

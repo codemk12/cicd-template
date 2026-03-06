@@ -4,10 +4,11 @@ import os
 
 app = FastAPI()
 
+
 @app.get("/health")
 async def health_check():
     return {
         "status": "up",
         "environment": os.getenv("ENVIRONMENT", "development"),
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }

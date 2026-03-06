@@ -1,3 +1,7 @@
 pytest
 httpx
 flake8
+black
+bandit
+pip-audit
+mypy
