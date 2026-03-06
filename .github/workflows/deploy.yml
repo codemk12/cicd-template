@@ -3,7 +3,7 @@ on:
   pull_request:
     branches: [ uat ]
   push:
-    branches: [ uat, main, 'release-*' ]
+    branches: [ uat, main, 'release-v*' ]
 
 jobs:
   test:
@@ -37,14 +37,27 @@ jobs:
     permissions: { contents: write }
     steps:
       - uses: actions/checkout@v4
-      - name: Create Release Branch
+        with:
+          fetch-depth: 0
+      - name: Determine version and create release branch
         run: |
-          git checkout -b release-$(date +'%Y%m%d-%H%M')
-          git push origin HEAD
+          LATEST=$(git branch -r --list 'origin/release-v*' --sort=-version:refname | head -1 | xargs)
+          if [ -z "$LATEST" ]; then
+            VERSION="v1"
+            PATCH=0
+          else
+            VERSION=$(echo "$LATEST" | sed 's|origin/release-\(v[0-9]*\)-.*|\1|')
+            LAST_PATCH=$(echo "$LATEST" | sed 's|origin/release-v[0-9]*-\([0-9]*\)-.*|\1|')
+            PATCH=$((LAST_PATCH + 1))
+          fi
+          BRANCH="release-${VERSION}-${PATCH}-$(date +'%Y%m%d')"
+          echo "Creating branch: $BRANCH"
+          git checkout -b "$BRANCH"
+          git push origin "$BRANCH"
 
   deploy-prod:
     needs: test
-    if: startsWith(github.ref, 'refs/heads/release-')
+    if: startsWith(github.ref, 'refs/heads/release-v')
     runs-on: ubuntu-latest
     environment: prod
     permissions: { contents: read, id-token: write }
